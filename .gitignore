@@ -1,0 +1,13 @@
+.direnv
+.envrc
+.vscode
+
+.*.sw[pon]
+
+.ipynb_checkpoints
+
+__pycache__/
+*.py[cod]
+
+
+day*_input[12].txt
