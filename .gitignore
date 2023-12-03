@@ -10,4 +10,5 @@ __pycache__/
 *.py[cod]
 
 
-day*_input[12].txt
+input[12].txt
+example[12].txt
