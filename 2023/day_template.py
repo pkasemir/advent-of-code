@@ -9,13 +9,8 @@ class Input(object):
 def convert_input(line):
     input = Input()
     input.line = line
-    input.count = 1
-    _, numbers = line.split(':')
-    winning, mine = numbers.split('|')
-    input.winning = list(map(int, winning.split()))
-    input.mine = list(map(int, mine.split()))
     return input
-    
+
 def load_input(filename, solution_p1=None, solution_p2=None):
     try:
         with open(filename,'r') as f:
@@ -28,30 +23,10 @@ def load_input(filename, solution_p1=None, solution_p2=None):
 
 def part1(input):
     total = 0
-    for card in input:
-        points = None
-        for num in card.mine:
-            if num in card.winning:
-                # print("win", num)
-                if not points:
-                    points = 1
-                else:
-                    points <<= 1
-        if points:
-            total += points
     return total
-    
+
 def part2(input):
     total = 0
-    for card_idx, card in enumerate(input):
-        wins = 0
-        for num in card.mine:
-            if num in card.winning:
-                wins += 1
-        # print("card", card_idx + 1, wins, card.count)
-        for idx in range(wins):
-            input[idx + card_idx + 1].count += card.count
-        total += card.count
     return total
 
 class AdventOfCode(unittest.TestCase):
@@ -61,7 +36,7 @@ class AdventOfCode(unittest.TestCase):
             script_dir += '/'
 
         self.input_set = [
-            load_input(script_dir + "example1.txt", 13, 30),
+            load_input(script_dir + "example1.txt", -1, -1),
             load_input(script_dir + "input1.txt"),
 
         ]
