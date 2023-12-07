@@ -3,10 +3,13 @@ import sys
 import os
 import re
 
-from pprint import pprint
+from pprint import pprint, pformat
 
 class Input(object):
-    pass
+    def __str__(self):
+        return f"<Input {pformat(self.__dict__)}>"
+
+    __repr__ = __str__
 
 def convert_input(line):
     input = Input()
