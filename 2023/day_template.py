@@ -3,6 +3,8 @@ import sys
 import os
 import re
 
+from pprint import pprint
+
 class Input(object):
     pass
 
@@ -38,7 +40,6 @@ class AdventOfCode(unittest.TestCase):
         self.input_set = [
             load_input(script_dir + "example1.txt", -1, -1),
             load_input(script_dir + "input1.txt"),
-
         ]
 
     def run_part(self, part_num, part_func):
