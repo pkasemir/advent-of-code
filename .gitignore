@@ -8,5 +8,5 @@ __pycache__/
 *.py[cod]
 
 
-input[12].txt
-example[123].txt
+input*.txt
+example*.txt
