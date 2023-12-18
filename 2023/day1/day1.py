@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 
 def append_input(inputs, filename, solution=None):

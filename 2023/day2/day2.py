@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 
 def convert_input(line):
