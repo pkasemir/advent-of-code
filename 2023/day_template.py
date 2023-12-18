@@ -1,9 +1,24 @@
 import unittest
 import sys
+import time
 import os
 import re
 
 from pprint import pprint, pformat
+
+class TimeBlock:
+    def __init__(self, description=None):
+        self.description = description
+
+    def __enter__(self):
+        self.begin = time.time()
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        end = time.time()
+        if exception_type is not None:
+            raise exception_value
+
+        print(f"{'' if self.description is None else self.description + ' '}took {end - self.begin:.3f} sec")
 
 class Input(object):
     def __str__(self):
