@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import re
+import os
+import sys
 
 def convert_input(line):
     m = line.split(':')
@@ -23,11 +25,16 @@ def convert_input(line):
         power *= val
     game['power'] = power
     # print(power)
-    
+
     return game
 
 
 def append_input(inputs, filename, solution=None):
+    script_dir = os.path.dirname(sys.argv[0])
+    if len(script_dir) > 0:
+        script_dir += '/'
+    filename = script_dir + filename
+
     try:
         with open(filename,'r') as f:
             lines = [line.strip() for line in f.readlines()]
@@ -47,7 +54,7 @@ bag = dict(red=12, green=13, blue=14)
 
 for input, solution in inputs:
     total = 0
-    
+
     for game in input:
         valid = True
         # print(game)
@@ -79,7 +86,7 @@ bag = dict(red=12, green=13, blue=14)
 
 for input, solution in inputs:
     total = sum([game['power'] for game in input])
-    
+
     result = f"total {total}"
     if solution is not None:
         result += " " + "matches" if solution == total else "not right"

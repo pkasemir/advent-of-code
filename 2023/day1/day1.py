@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 import re
+import os
+import sys
 
 def append_input(inputs, filename, solution=None):
+    script_dir = os.path.dirname(sys.argv[0])
+    if len(script_dir) > 0:
+        script_dir += '/'
+    filename = script_dir + filename
+
     try:
         with open(filename,'r') as f:
             inputs.append((f.read(), solution))
