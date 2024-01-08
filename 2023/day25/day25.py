@@ -5,6 +5,7 @@ import time
 import os
 import re
 import graphviz
+import networkx as nx
 
 from pprint import pprint, pformat
 
@@ -135,6 +136,8 @@ def traverse_graph(graph, keys:set, edge, group:set):
 def part1(input):
     total = 0
     graph = to_graph(input)
+    if len(graph) > 100:
+        return total
     # pprint(graph)
     # print('graph', len(graph))
     # plot_graph(graph)
@@ -181,6 +184,17 @@ def part1(input):
 
 def part2(input):
     total = 0
+    graph = to_graph(input)
+    G = nx.Graph()
+    G.add_nodes_from(graph.keys())
+    for edge1, edges in graph.items():
+        for edge2 in edges:
+            G.add_edge(edge1, edge2)
+    # print(G)
+    communities_generator = nx.community.girvan_newman(G)
+    communities = next(communities_generator)
+    # print(communities)
+    total = len(communities[0]) * len(communities[1])
     return total
 
 class AdventOfCode(unittest.TestCase):
@@ -190,7 +204,7 @@ class AdventOfCode(unittest.TestCase):
             script_dir += '/'
 
         self.input_set = [
-            load_input(script_dir + "example1.txt", 54, -1),
+            load_input(script_dir + "example1.txt", 54, 54),
             load_input(script_dir + "input1.txt"),
         ]
 
