@@ -25,6 +25,7 @@ class TimeBlock:
 class Input(object):
     def __init__(self, line):
         self.line = line
+        self.batteries = list(map(int, line))
 
     def __str__(self):
         return f"<Input {pformat(self.__dict__)}>"
@@ -41,14 +42,43 @@ def load_input(filename, solution_p1=None, solution_p2=None):
     inputs = [Input(line) for line in lines]
     return (inputs, solution_p1, solution_p2)
 
-def part1(inputs: List[Input]):
+def get_joltage(batteries, length):
+    n_batteries = len(batteries)
+    joltage = []
+    for i, b in enumerate(batteries):
+        start = max(0, length - n_batteries + i)
+        # print(i, b, start)
+        for j in range(start, length):
+            if j >= len(joltage):
+                joltage.append(b)
+                break
+            if joltage[j] < b:
+                joltage[j] = b
+                for k in range(j + 1, len(joltage)):
+                    joltage[k] = 0
+
+                # print('found', i, j, b, joltage)
+                break
+    return joltage
+
+def get_total(inputs: List[Input], length):
     total = 0
     for input in inputs:
-        print(input)
+        # print(input.line)
+        joltage = get_joltage(input.batteries, length)
+        # print(joltage)
+        joltage = int(''.join(map(str, joltage)))
+        total += joltage
+    return total
+
+def part1(inputs: List[Input]):
+    total = 0
+    total = get_total(inputs, 2)
     return total
 
 def part2(inputs: List[Input]):
     total = 0
+    total = get_total(inputs, 12)
     return total
 
 class AdventOfCode(unittest.TestCase):
@@ -58,7 +88,7 @@ class AdventOfCode(unittest.TestCase):
             script_dir += '/'
 
         self.input_set = [
-            load_input(script_dir + "example1.txt", -1, -1),
+            load_input(script_dir + "example1.txt", 357, 3121910778619),
             load_input(script_dir + "input1.txt"),
         ]
 

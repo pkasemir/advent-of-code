@@ -1,10 +1,9 @@
-if [ $# != 1 ]; then
-    echo "USAGE: new_day.sh <dayN>"
-    exit 1
-fi
+DAYS=$(find -maxdepth 1 -name "day*" -type d | wc -w )
+DAY=day$((DAYS + 1))
+echo "Making $DAY"
 
-mkdir -p $1
-cp -v day_template.py $1/$1.py
-touch $1/example1.txt $1/input1.txt
-git add $1/$1.py
-tree $1
+mkdir -p $DAY
+cp -v day_template.py $DAY/$DAY.py
+touch $DAY/example1.txt $DAY/input1.txt
+git add $DAY/$DAY.py
+tree $DAY
