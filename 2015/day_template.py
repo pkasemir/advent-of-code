@@ -25,4 +25,4 @@ class TodaysAdventOfCode(AdventOfCode):
         self.load_test_inputs("example1.txt", "input1.txt")
         self.run_part(part2, -1)
 
-unittest.main(verbosity=0)
+TodaysAdventOfCode.run_tests()
