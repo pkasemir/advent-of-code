@@ -20,13 +20,16 @@ def to_element_list(molecule:str):
         i += 1
     return elements
 
-def get_replacements(inputs: List[TodaysInput], conv=to_element_list):
+def get_replacements(inputs: List[TodaysInput], reverse=False):
     replacements = {}
     for input in inputs:
         s = input.line.split(' => ')
         if len(s) == 1:
             break
-        replacements.setdefault(s[0], []).append(conv(s[1]))
+        if reverse:
+            replacements[tuple(to_element_list(s[1]))] = s[0]
+        else:
+            replacements.setdefault(s[0], []).append(to_element_list(s[1]))
 
         # print(input)
     return replacements
@@ -37,9 +40,6 @@ def get_possible_molecules(molecule, replacements):
         if element not in replacements:
             continue
         for r in replacements[element]:
-            # my_molecule = molecule[:i]
-            # my_molecule.extend(r)
-            # my_molecule.extend(molecule[i+1:])
             my_molecule = do_replacement(molecule, slice(i, i+1), r)
             # print(element, r, my_molecule)
             molecules.add(tuple(my_molecule))
@@ -56,262 +56,81 @@ def part1(inputs: List[TodaysInput]):
 
     return total
 
-# from pyvis.network import Network
-
-def find_indexes_of(pattern, parent):
-    for i in range(len(parent) - len(pattern), -1, -1):
-        match = True
-        for pat, par in zip(pattern, parent[i:]):
-            if pat != par:
-                match = False
-                break
-        if match:
-            yield i
-
 def do_replacement(parent, p_slice:slice, replace):
-    # replacement = parent[:p_slice.start]
-    # replacement.extend(replace)
-    # replacement.extend(parent[p_slice.stop:])
     replacement = (*parent[:p_slice.start], *replace, *parent[p_slice.stop:])
     return replacement
 
-def recurse_replace(r_replacements, cur_molecule, step=0, my_best_replace = 1e10):
-    step += 1
-    if step >= my_best_replace:
-        return my_best_replace
-    for r_molecule, to_element in r_replacements:
-        # print(step, r_molecule, to_element)
-        if to_element == 'e':
-            if r_molecule == cur_molecule:
-                print('Found e from', cur_molecule, step)
-                return step
-            continue
-
-        for i in find_indexes_of(r_molecule, cur_molecule):
-            next_molecule = do_replacement(cur_molecule, slice(i, i + len(r_molecule)), to_element)
-            # print('next', cur_molecule)
-            # print('   ', i, r_molecule, to_element, next_molecule)
-            print('step', step, 'i', i, r_molecule, to_element, len(next_molecule))
-            # input()
-            replace_count = recurse_replace(r_replacements, next_molecule, step, my_best_replace)
-            my_best_replace = min(my_best_replace, replace_count)
-    return my_best_replace
-
-import bisect
-
-def get_fastest_reverse(r_replacements, cur_molecule):
-    # use breadth first search
-    # print(replacements)
-    q = [(0, cur_molecule)]
-    running = True
-    last_step = 0
-    last_time = time.time() + 1
-    while running:
-        step, cur_molecule = q.pop(0)
-        # print(step, cur_molecule)
-        # print('step', step, 'len(cur_molecule)', len(cur_molecule))
-        # input()
-        step += 1
-        # if step > last_step:
-        #     last_step = step
-        #     print('step', step, len(q))
-        if last_time < time.time():
-            last_time = time.time() + 1
-            print('step', step, len(q))
-            # break
-        # next_molecules = get_possible_molecules(cur_molecule, replacements)
-        # # pprint(next_molecules)
-        # for m in next_molecules:
-        #     if m == molecule:
-        #         total = step
-        #         running = False
-        #         break
-        #     if len(m) <= len(molecule):
-
-        for r_molecule, to_element in r_replacements:
-            # print(step, r_molecule, to_element)
-            if to_element == 'e':
-                if r_molecule == cur_molecule:
-                    print('Found e from', cur_molecule, step)
-                    return step
-                continue
-
-            for i in find_indexes_of(r_molecule, cur_molecule):
-                next_molecule = do_replacement(cur_molecule, slice(i, i + len(r_molecule)), to_element)
-                # print('next', cur_molecule)
-                # print('   ', i, r_molecule, to_element, next_molecule)
-                # print('step', step, 'i', i, r_molecule, to_element, len(next_molecule))
-                # input()
-                # replace_count = recurse_replace(r_replacements, next_molecule, step, my_best_replace)
-                # my_best_replace = min(my_best_replace, replace_count)
-                # q.append((step, next_molecule))
-                bisect.insort(q, (step, next_molecule), key=lambda x: len(x[1]))
-
-def get_fastest_reverse2(r_replacements, cur_molecule):
-    step = 1
-    last_molecule = cur_molecule
-    while True:
-        for r_molecule, to_element in r_replacements:
-            # print(step, r_molecule, to_element)
-            if to_element == 'e':
-                if r_molecule == cur_molecule:
-                    print('Found e from', cur_molecule, step)
-                    return step
-                continue
-            for i in find_indexes_of(r_molecule, cur_molecule):
-                print(step, r_molecule, to_element, i)
-                cur_molecule = do_replacement(cur_molecule, slice(i, i + len(r_molecule)), to_element)
-                step += 1
-                if last_molecule == cur_molecule:
-                    print('stale')
-                    return -1
-                last_molecule = cur_molecule
-                break
-
+# parse using a modified CYK algorithm
 def parse_grammar(inputs: List[TodaysInput]):
-    replacements = get_replacements(inputs, str)
-    molecule = inputs[-1].line
-    pprint(replacements)
+    replacements = get_replacements(inputs, reverse=True)
+    molecule = to_element_list(inputs[-1].line)
+    # pprint(replacements)
 
-    for i in range(len(molecule)):
-        pass
+    # Expand the replacement to get minimal production rules Ra => Rb Rc
+    min_replacements = {}
+    for prod, input in replacements.items():
+        while len(prod) > 2:
+            new_prod = (prod[1], prod[2])
+            # Add reduction rule with x prefix so we don't count it as a real step
+            new_input = 'x' + prod[1] + prod[2]
+            min_replacements[new_prod] = new_input
+            prod = (prod[0], new_input, *prod[3:])
 
-    return 0
+        min_replacements[prod] = input
+    # pprint(min_replacements)
 
-def cheat(inputs: List[TodaysInput]):
-    input1 = "\n".join(map(lambda x: x.line, inputs))
-    molecule = input1.split('\n')[-1][::-1]
-    reps = {m[1][::-1]: m[0][::-1]
-            for m in re.findall(r'(\w+) => (\w+)', input1) if m[0] != 'e'}
-    reps_e = "|".join([m[1][::-1]
-            for m in re.findall(r'(\w+) => (\w+)', input1) if m[0] == 'e'])
-    reps_e = f'^({reps_e})$'
-    # print(reps_e)
-    # rev_it = lambda x: x[::-1]
-    # molecule = rev_it(inputs[-1].line)
-    # # reps = {m[1][::-1]: m[0][::-1]
-    # #         for m in re.findall(r'(\w+) => (\w+)', input)}
-    # print('molecule', str(molecule))
-    # pprint(get_replacements(inputs, str))
-    # # reps = {t[::-1]: f[::-1]
-    # #         for f, t in get_replacements(inputs, str).items()}
-    # reps = {}
-    # for f, tl in get_replacements(inputs, str).items():
-    #     for t in tl:
-    #         reps[rev_it(t)] = rev_it(f)
+    # Run CYK algorithm
+    P = [[set([e]) for e in molecule]]
+    back = [[{} for e in molecule]]
+    for l in range(1, len(molecule)):
+        layer = []
+        P.append(layer)
+        b_layer = []
+        back.append(b_layer)
+        for s in range(len(molecule) - l):
+            span = set()
+            layer.append(span)
+            b_span = {}
+            b_layer.append(b_span)
+            for p in range(l):
+                for e1 in  P[p][s]:
+                    for e2 in P[l-p - 1][s+p +1]:
+                        if (e1, e2) in min_replacements:
+                            e_from = min_replacements[(e1, e2)]
+                            span.add(e_from)
+                            b_span.setdefault(e_from, []).append((p, e1, e2))
 
-    # pprint(reps)
+    # for l in P:
+    #     print(l)
+    # print()
+    # for l in back:
+    #     print(l)
 
-    def rep(x):
-        return reps[x.group()]
+    def get_backtrace(e, l, s):
+        # print('backtrace', e, 'l', l, 's', s)
+        for p, b, c in back[l][s].get(e, []):
+            # print('e', e, 'p', p, 's', s, 'b', b, 'c', c)
+            b1, s1 = get_backtrace(b, p, s)
+            b2, s2 = get_backtrace(c, l-p - 1, s+p +1)
 
-    count = 0
-    while True:
-        if re.match(reps_e, molecule):
-            count += 1
-            break
-        molecule = re.sub('|'.join(reps.keys()), rep, molecule, count=1)
-        # print(molecule)
-        count += 1
+            if e[0] == 'x':
+                my_steps = 0
+            else:
+                my_steps = 1
+            return b1 + b2, my_steps + s1 + s2
+        return e.replace('x', ''), 0
 
-    # print(count)
-    return count
-
+    final_element = list(back[-1][0].keys())[0]
+    reproduce, steps = get_backtrace(final_element, len(back) - 1, 0)
+    assert(reproduce == "".join(molecule))
+    if final_element != 'e':
+        # Account for example style inputs with e => O
+        steps += 1
+    return steps
 
 def part2(inputs: List[TodaysInput]):
     total = 0
-    total = cheat(inputs)
-    return total
-    # total = parse_grammar(inputs)
-    # return total
-    global replacements
-    replacements = get_replacements(inputs)
-    molecule = tuple(to_element_list(inputs[-1].line))
-    ##########
-    # p = list("hello world")
-    # print(p)
-    # print(do_replacement(p, slice(1, 2), ['E']))
-    # print(do_replacement(p, slice(1, 5), ['H']))
-    # print(do_replacement(p, slice(1, 5), list('eat')))
-    # print(do_replacement(p, slice(1, 2), list('eat')))
-    # exit()
-    ##########
-    # pprint(replacements)
-    print('len(molecule)', len(molecule))
-    r_count = 0
-    r_set = set()
-    e_set = set(replacements.keys())
-    for r, l in replacements.items():
-        e_set.update(*l)
-    # net = Network()
-    # net.add_nodes(e_set)
-    e_count = {}
-    e_dict = {}
-    for r, l in replacements.items():
-        for l2 in l:
-            r_set.add((tuple(l2), r))
-            for e in l2:
-                # print(e)
-                e_count.setdefault(e, 0)
-                e_dict.setdefault(e, set())
-                e_count[e] += 1
-                e_dict[e].add(r)
-                # net.add_edge(r, e)
-
-        # print(l)
-        r_count += len(l)
-    # net.show('vis.html', notebook=False)
-    print('r_count', r_count)
-    print('len(r_set)', len(r_set))
-    pprint('r_set')
-    pprint(r_set)
-    pprint('sorted(r_set)')
-    r_replacements = sorted(sorted(r_set), key=lambda x: -len(x[0]))
-    # pprint(r_replacements)
-    for m, to in r_replacements:
-        print(tuple(map("{:2}".format, m)), 'to', to)
-    pprint('e_count')
-    pprint(e_count)
-    pprint('e_dict')
-    pprint(e_dict)
-    pprint('e_set')
-    pprint(e_set)
-    print(len(e_set), len(replacements))
-    # use largest replacements first
-    cur_molecule = tuple(molecule)
-    # total = recurse_replace(r_replacements, cur_molecule)
-    total = get_fastest_reverse2(r_replacements, cur_molecule)
-
-
-    return total
-
-
-    # use breadth first search
-    # print(replacements)
-    q = [(0, ['e'])]
-    running = True
-    last_step = 0
-    last_time = time.time() + 1
-    while running:
-        step, cur_molecule = q.pop(0)
-        # print(step, cur_molecule)
-        step += 1
-        # if step > last_step:
-        #     last_step = step
-        if last_time < time.time():
-            last_time = time.time() + 1
-            print('step', step, len(q))
-            break
-        next_molecules = get_possible_molecules(cur_molecule, replacements)
-        # pprint(next_molecules)
-        for m in next_molecules:
-            if m == molecule:
-                total = step
-                running = False
-                break
-            if len(m) <= len(molecule):
-                q.append((step, list(m)))
-
+    total = parse_grammar(inputs)
     return total
 
 class TodaysAdventOfCode(AdventOfCode):
