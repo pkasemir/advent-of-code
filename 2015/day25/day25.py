@@ -6,23 +6,19 @@ class TodaysInput(Input):
         m = re.findall('[0-9]+', self.line)
         self.row, self.col = list(map(int, m))
 
-def next_code(code):
-    return code * 252533 % 33554393
-
 def get_seq_number(row, col):
     start_row = row + col
+    # Formula for 1 + 2 + 3 + 4 ...
     start_seq = start_row * (start_row + 1) // 2
     return start_seq + col
 
 def get_code(seq):
     code = 20151125
-    for _ in range(seq):
-        code = next_code(code)
-    return code
+    mult = pow(252533, seq, 33554393)
+    return code * mult % 33554393
 
 def part1(inputs: List[TodaysInput]):
     total = 0
-    # print(next_code(20151125))
     # for row in range(6):
     #     for col in range(6):
     #         print(f'{get_code(get_seq_number(row, col)): 10}', end='')
